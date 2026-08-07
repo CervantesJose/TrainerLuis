@@ -3,8 +3,8 @@ import SwiftData
 
 /// Copies an existing workout onto another day.
 ///
-/// This is how templates work: reusing a session means duplicating it. Name, notes, exercises,
-/// per-workout sets/reps and superset grouping all come across; completion state does not.
+/// Reusing a session means duplicating it. Name, notes, exercises, per-workout
+/// sets/reps and superset grouping all come across; completion state does not.
 struct DuplicateWorkoutView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
