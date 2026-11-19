@@ -4,7 +4,7 @@ struct WorkoutRow: View {
     let workout: Workout
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack {
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
                     .fill(workout.isCompleted ? Color.green.opacity(0.15) : Color.accentColor.opacity(0.12))
@@ -14,10 +14,10 @@ struct WorkoutRow: View {
                     .font(.title3)
             }
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading) {
                 Text(workout.name)
                     .font(.headline)
-                HStack(spacing: 8) {
+                HStack {
                     Text(workout.date.formatted(date: .abbreviated, time: .omitted))
                     Text("·")
                     Text(workout.summary)
@@ -37,7 +37,6 @@ struct WorkoutRow: View {
                     .background(.green.opacity(0.15), in: .capsule)
             }
         }
-        .padding(.vertical, 4)
     }
 }
 

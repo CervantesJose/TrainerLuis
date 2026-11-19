@@ -117,7 +117,7 @@ private struct CalendarHeader: View {
     let workoutsByDay: [Date: [Workout]]
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack {
             MonthHeader(currentMonth: $currentMonth)
             WeekdayHeader()
             CalendarGrid(month: currentMonth, selectedDate: $selectedDate, workoutsByDay: workoutsByDay)
@@ -156,7 +156,6 @@ private struct MonthHeader: View {
             .frame(width: 44, height: 44)
         }
         .padding(.horizontal)
-        .padding(.bottom, 4)
     }
 }
 
@@ -173,7 +172,6 @@ private struct WeekdayHeader: View {
             }
         }
         .padding(.horizontal)
-        .padding(.bottom, 6)
     }
 }
 
@@ -208,8 +206,8 @@ private struct CalendarGrid: View {
                 }
             }
         }
-        .padding(.horizontal, 4)
-        .padding(.bottom, 8)
+        // Same inset as the weekday header, so each column sits under its label.
+        .padding(.horizontal)
     }
 
     private func daysInMonth() -> [Date?] {

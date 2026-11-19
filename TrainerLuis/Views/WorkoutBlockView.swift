@@ -35,7 +35,7 @@ struct WorkoutBlockView: View {
             row(for: slot, label: nil, superset: nil)
 
         case .superset(let groupID, let members):
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading) {
                 SupersetHeader(
                     count: members.count,
                     onOpen: onOpenSuperset.map { open in { open(groupID) } }
@@ -45,7 +45,6 @@ struct WorkoutBlockView: View {
                     row(for: slot, label: "\(index + 1)", superset: groupID)
                 }
             }
-            .padding(.vertical, 4)
             .listRowBackground(Color.accentColor.opacity(0.07))
         }
     }
@@ -88,7 +87,7 @@ private struct SupersetHeaderLabel: View {
     let showsChevron: Bool
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack {
             Image(systemName: "link")
                 .font(.caption2)
             Text("Superset")
@@ -96,7 +95,7 @@ private struct SupersetHeaderLabel: View {
             Text("· \(count) exercises")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            Spacer(minLength: 8)
+            Spacer()
             if showsChevron {
                 Image(systemName: "chevron.right")
                     .font(.caption2.weight(.semibold))
@@ -127,9 +126,9 @@ private struct SlotRow: View {
             Button {
                 onStartTimer(slot)
             } label: {
-                HStack(spacing: 8) {
+                HStack {
                     SlotContent(slot: slot, label: label)
-                    Spacer(minLength: 8)
+                    Spacer()
                     Image(systemName: slot.isComplete ? "checkmark.circle.fill" : "play.circle.fill")
                         .font(.title2)
                         .foregroundStyle(slot.isComplete ? .green : .accent)
@@ -152,9 +151,9 @@ private struct SlotRow: View {
             Button {
                 onOpenSuperset(superset)
             } label: {
-                HStack(spacing: 8) {
+                HStack {
                     SlotContent(slot: slot, label: label)
-                    Spacer(minLength: 8)
+                    Spacer()
                 }
             }
             .buttonStyle(.plain)
@@ -173,7 +172,7 @@ private struct SlotContent: View {
     let label: String?
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack {
             if let label {
                 Text(label)
                     .font(.caption2.weight(.bold))

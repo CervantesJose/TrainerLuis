@@ -23,7 +23,7 @@ struct WorkoutDetailView: View {
         List {
             Section {
                 HStack {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading) {
                         Label(
                             workout.date.formatted(date: .complete, time: .omitted),
                             systemImage: "calendar"
@@ -45,7 +45,6 @@ struct WorkoutDetailView: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel(workout.isCompleted ? "Mark Incomplete" : "Mark Complete")
                 }
-                .padding(.vertical, 4)
             }
 
             Section {
@@ -145,11 +144,8 @@ private struct CompletionBadge: View {
     let isCompleted: Bool
 
     var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
-            Text(isCompleted ? "Done" : "Pending")
-                .font(.caption.bold())
-        }
+        Label(isCompleted ? "Done" : "Pending", systemImage: isCompleted ? "checkmark.circle.fill" : "circle")
+            .font(.caption.bold())
         .foregroundStyle(isCompleted ? .green : .orange)
         .padding(.horizontal, 10)
         .padding(.vertical, 5)

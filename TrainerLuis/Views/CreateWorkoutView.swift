@@ -68,7 +68,7 @@ struct CreateWorkoutView: View {
                     if drafts.isEmpty {
                         Text("Add the movements for this workout. Sets and targets here apply to this workout only — the library keeps its own defaults.")
                     } else {
-                        Text("Swipe a row right to superset it with the one above. Tap a row's measure button to switch it between reps, a timed set, and nothing to count.")
+                        Text("Swipe a row right to superset it with the one above. Tap a row's measurement type button to switch it between reps, timed, and completion.")
                     }
                 }
 
@@ -380,8 +380,8 @@ private struct DraftRow: View {
     let onRemove: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading) {
+            HStack {
                 if let supersetLabel {
                     Text(supersetLabel)
                         .font(.caption2.weight(.bold))
@@ -405,7 +405,7 @@ private struct DraftRow: View {
                 MeasureMenu(kind: $draft.kind)
             }
 
-            HStack(spacing: 12) {
+            HStack {
                 if draft.kind != .untracked {
                     NumberField(
                         title: "Sets",
@@ -442,7 +442,6 @@ private struct DraftRow: View {
                 }
             }
         }
-        .padding(.vertical, 2)
         .listRowBackground(Color.accentColor.opacity(supersetLabel == nil ? 0 : 0.07))
         .swipeActions(edge: .leading, allowsFullSwipe: false) {
             if canGroupWithPrevious {
@@ -473,13 +472,13 @@ private struct MeasureMenu: View {
 
     var body: some View {
         Menu {
-            Picker("Measured in", selection: $kind) {
+            Picker("Measurement Type", selection: $kind) {
                 ForEach(SetMeasure.Kind.allCases) { kind in
                     Label(kind.label, systemImage: kind.symbol).tag(kind)
                 }
             }
         } label: {
-            Label("Measured in \(kind.label)", systemImage: kind.symbol)
+            Label("Measurement Type: \(kind.label)", systemImage: kind.symbol)
                 .labelStyle(.iconOnly)
                 .font(.subheadline)
                 .frame(width: 30, height: 30)

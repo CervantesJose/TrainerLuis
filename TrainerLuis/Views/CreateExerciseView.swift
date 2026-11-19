@@ -173,7 +173,7 @@ private struct MeasureDefaultsSection: View {
 
     var body: some View {
         Section {
-            Picker("Measured in", selection: $kind) {
+            Picker("Measurement Type", selection: $kind) {
                 ForEach(SetMeasure.Kind.allCases) { kind in
                     Label(kind.label, systemImage: kind.symbol).tag(kind)
                 }
@@ -199,7 +199,7 @@ private struct MeasureDefaultsSection: View {
                 EmptyView()
             }
         } header: {
-            Text("Defaults")
+            Text("Measurement Type")
         } footer: {
             Text(footer)
         }

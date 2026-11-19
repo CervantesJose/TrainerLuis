@@ -115,7 +115,7 @@ private struct PickerRow: View {
 
     var body: some View {
         Button(action: onToggle) {
-            HStack(spacing: 12) {
+            HStack {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.title3)
                     .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)

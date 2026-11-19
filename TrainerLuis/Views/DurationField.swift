@@ -22,7 +22,7 @@ struct DurationField: View {
     @State private var remainder: Int?
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack {
             if !title.isEmpty {
                 Text(title)
                     .font(.subheadline)

@@ -33,7 +33,10 @@ nonisolated enum SetMeasure: Equatable, Hashable {
 
 nonisolated extension SetMeasure {
     /// The measure axis stripped of its value, for pickers and for storing "which fields
-    /// should be showing" while a value is still being typed.
+    /// should be showing" while a value is still being typed. Shown to people as the
+    /// "Measurement Type".
+    ///
+    /// Named `Kind` because `SetMeasure.Type` is reserved for the metatype.
     enum Kind: String, CaseIterable, Identifiable, Codable {
         case reps
         case time
@@ -44,15 +47,15 @@ nonisolated extension SetMeasure {
         var label: String {
             switch self {
             case .reps: "Reps"
-            case .time: "Time"
-            case .untracked: "None"
+            case .time: "Timed"
+            case .untracked: "Completion"
             }
         }
 
         var symbol: String {
             switch self {
-            case .reps: "repeat"
-            case .time: "timer"
+            case .reps: "number"
+            case .time: "stopwatch"
             case .untracked: "checkmark.circle"
             }
         }

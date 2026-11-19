@@ -60,8 +60,7 @@ struct SetTimerView: View {
                 )
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 16)
+            .scenePadding()
             .navigationTitle("Set Timer")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -171,7 +170,7 @@ private struct TimerHeader: View {
     let slot: WorkoutExercise
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack {
             Text(slot.exercise?.name ?? "Exercise")
                 .font(.title2.bold())
                 .multilineTextAlignment(.center)
@@ -282,7 +281,7 @@ private struct TimerControls: View {
     let onResetProgress: () -> Void
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack {
             if slot.isComplete {
                 Button(action: onResetProgress) {
                     Label("Start Over", systemImage: "arrow.counterclockwise")
@@ -301,7 +300,7 @@ private struct TimerControls: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
 
-                HStack(spacing: 12) {
+                HStack {
                     Button(action: onSkip) {
                         Label("Skip Set", systemImage: "forward.end.fill")
                             .frame(maxWidth: .infinity)

@@ -148,7 +148,6 @@ private struct SupersetMemberSection: View {
                 VideoPlayerView(urlString: url)
                     .aspectRatio(16 / 9, contentMode: .fit)
                     .clipShape(.rect(cornerRadius: 10))
-                    .listRowInsets(.init(top: 12, leading: 12, bottom: 12, trailing: 12))
             }
 
             if let notes = slot.exercise?.notes, !notes.isEmpty {
@@ -165,7 +164,7 @@ private struct SupersetMemberSection: View {
                 }
             }
         } header: {
-            HStack(spacing: 8) {
+            HStack {
                 Text("\(position)")
                     .font(.caption2.weight(.bold))
                     .monospaced()
@@ -176,7 +175,6 @@ private struct SupersetMemberSection: View {
                     .font(.headline)
             }
             .textCase(nil)
-            .padding(.vertical, 2)
         }
     }
 }

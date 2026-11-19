@@ -62,15 +62,15 @@ struct ExerciseRow: View {
 
     var body: some View {
         if let exercise {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading) {
                 Text(exercise.name)
                     .font(.headline)
-                HStack(spacing: 12) {
+                HStack {
                     if let prescription {
-                        Label(prescription, systemImage: isTimed ? "timer" : "repeat")
+                        Label(prescription, systemImage: (isTimed ? SetMeasure.Kind.time : .reps).symbol)
                             .monospacedDigit()
                     } else {
-                        Label("No target", systemImage: "checkmark.circle")
+                        Label(SetMeasure.Kind.untracked.label, systemImage: SetMeasure.Kind.untracked.symbol)
                     }
                     if showsDefaultHint {
                         Text("default")
@@ -88,12 +88,10 @@ struct ExerciseRow: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             }
-            .padding(.vertical, 2)
         } else {
             Text("Exercise removed")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-                .padding(.vertical, 2)
         }
     }
 }

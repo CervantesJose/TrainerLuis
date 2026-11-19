@@ -17,7 +17,7 @@ struct NumberField: View {
     @State private var text: String = ""
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack {
             // Skipped when empty so a caller composing several fields into one row — see
             // ``DurationField`` — doesn't pay for an invisible label's leading space.
             if !title.isEmpty {
