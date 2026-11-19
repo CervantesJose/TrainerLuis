@@ -34,10 +34,52 @@ struct CreateWorkoutView: View {
     var body: some View {
         NavigationStack {
             Form {
-                infoSection
-                exercisesSection
+                WorkoutInfoSection(name: $name, date: $date, sameDay: sameDay)
+
+                Section {
+                    let labels = supersetLabels
+                    ForEach(drafts.enumerated(), id: \.element.id) { index, draft in
+                        DraftRow(
+                            draft: draftBinding(draft),
+                            supersetLabel: labels[draft.id],
+                            canGroupWithPrevious: canGroupWithPrevious(index),
+                            onGroupWithPrevious: { groupWithPrevious(index) },
+                            onUngroup: { ungroup(draft.id) },
+                            onRemove: { remove(draft.id) }
+                        )
+                    }
+                    .onDelete(perform: deleteDrafts)
+                    .onMove(perform: moveDrafts)
+
+                    Button("Add Exercise", systemImage: "plus.circle.fill") {
+                        showingExercisePicker = true
+                    }
+                } header: {
+                    HStack {
+                        Text("Exercises")
+                        Spacer()
+                        if !drafts.isEmpty {
+                            Text(drafts.count == 1 ? "1 exercise" : "\(drafts.count) exercises")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } footer: {
+                    if drafts.isEmpty {
+                        Text("Add the movements for this workout. Sets and targets here apply to this workout only — the library keeps its own defaults.")
+                    } else {
+                        Text("Swipe a row right to superset it with the one above. Tap a row's measure button to switch it between reps, a timed set, and nothing to count.")
+                    }
+                }
+
                 if !isEditing && drafts.isEmpty {
-                    startFromSection
+                    Section {
+                        Button("Copy from an existing workout", systemImage: "doc.on.doc") {
+                            showingSourcePicker = true
+                        }
+                    } footer: {
+                        Text("Reuses that workout's exercises, sets, targets and supersets as a starting point.")
+                    }
                 }
             }
             .navigationTitle(isEditing ? "Edit Workout" : "New Workout")
@@ -72,197 +114,7 @@ struct CreateWorkoutView: View {
         }
     }
 
-    // MARK: Sections
-
-    private var infoSection: some View {
-        Section {
-            TextField("Workout Name", text: $name)
-                .autocorrectionDisabled()
-
-            DatePicker("Date", selection: $date, displayedComponents: .date)
-        } header: {
-            Text("Workout Info")
-        } footer: {
-            if sameDay.isEmpty {
-                Text("A day can hold more than one workout — a morning run and an evening lift are two separate workouts.")
-            } else {
-                Text("Already on \(date.formatted(.dateTime.month().day())): \(sameDay.map(\.name).formatted(.list(type: .and))). This one will be added alongside \(sameDay.count == 1 ? "it" : "them").")
-            }
-        }
-    }
-
-    private var exercisesSection: some View {
-        Section {
-            ForEach(drafts.enumerated(), id: \.element.id) { index, draft in
-                draftRow(draft, at: index)
-            }
-            .onDelete(perform: deleteDrafts)
-            .onMove(perform: moveDrafts)
-
-            Button {
-                showingExercisePicker = true
-            } label: {
-                Label("Add Exercise", systemImage: "plus.circle.fill")
-            }
-        } header: {
-            HStack {
-                Text("Exercises")
-                Spacer()
-                if !drafts.isEmpty {
-                    Text(drafts.count == 1 ? "1 exercise" : "\(drafts.count) exercises")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-        } footer: {
-            if drafts.isEmpty {
-                Text("Add the movements for this workout. Sets and targets here apply to this workout only — the library keeps its own defaults.")
-            } else {
-                Text("Swipe a row right to superset it with the one above. Tap a row's measure button to switch it between reps, a timed set, and nothing to count.")
-            }
-        }
-    }
-
-    private var startFromSection: some View {
-        Section {
-            Button {
-                showingSourcePicker = true
-            } label: {
-                Label("Copy from an existing workout", systemImage: "doc.on.doc")
-            }
-        } footer: {
-            Text("Reuses that workout's exercises, sets, targets and supersets as a starting point.")
-        }
-    }
-
-    // MARK: Rows
-
-    @ViewBuilder
-    private func draftRow(_ draft: WorkoutExerciseDraft, at index: Int) -> some View {
-        let label = supersetLabels[draft.id]
-
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                if let label {
-                    Text(label)
-                        .font(.caption2.weight(.bold))
-                        .monospaced()
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(.tint, in: .capsule)
-                }
-                Text(draft.exercise.name)
-                    .font(.headline)
-                Spacer()
-                if draft.exercise.videoURL != nil {
-                    Image(systemName: "play.circle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.accent)
-                }
-                // Sits on the name line rather than beside the fields: three number boxes
-                // plus a picker on one line squeezed the fields until their labels wrapped.
-                measureMenu(for: draft)
-            }
-
-            HStack(spacing: 12) {
-                if draft.kind != .untracked {
-                    NumberField(
-                        title: "Sets",
-                        value: numberBinding(draft.id, \.sets),
-                        placeholder: "\(draft.setsPlaceholder)"
-                    )
-                }
-
-                switch draft.kind {
-                case .reps:
-                    NumberField(
-                        title: "Reps",
-                        value: numberBinding(draft.id, \.reps),
-                        placeholder: "\(draft.exercise.measure.repCount ?? SetMeasure.defaultReps)"
-                    )
-                case .time:
-                    DurationField(
-                        title: "",
-                        seconds: numberBinding(draft.id, \.durationSeconds),
-                        placeholder: draft.exercise.measure.seconds ?? SetMeasure.defaultSeconds
-                    )
-                case .untracked:
-                    Text("Nothing to count")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer(minLength: 0)
-
-                if let resolved = draft.resolvedPrescription {
-                    Text(resolved)
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.tertiary)
-                }
-            }
-        }
-        .padding(.vertical, 2)
-        .listRowBackground(Color.accentColor.opacity(label == nil ? 0 : 0.07))
-        .swipeActions(edge: .leading, allowsFullSwipe: false) {
-            if canGroupWithPrevious(index) {
-                Button {
-                    groupWithPrevious(index)
-                } label: {
-                    Label("Superset", systemImage: "link")
-                }
-                .tint(.accentColor)
-            }
-            if draft.supersetID != nil {
-                Button {
-                    ungroup(draft.id)
-                } label: {
-                    Label("Ungroup", systemImage: "scissors")
-                }
-                .tint(.orange)
-            }
-        }
-        .contextMenu {
-            if canGroupWithPrevious(index) {
-                Button {
-                    groupWithPrevious(index)
-                } label: {
-                    Label("Superset with above", systemImage: "link")
-                }
-            }
-            if draft.supersetID != nil {
-                Button {
-                    ungroup(draft.id)
-                } label: {
-                    Label("Remove from superset", systemImage: "scissors")
-                }
-            }
-            Button(role: .destructive) {
-                remove(draft.id)
-            } label: {
-                Label("Remove", systemImage: "trash")
-            }
-        }
-    }
-
-    /// A menu rather than a segmented control: three segments per row would crowd out the
-    /// number fields, and the measure is picked once and then left alone.
-    private func measureMenu(for draft: WorkoutExerciseDraft) -> some View {
-        Menu {
-            Picker("Measured in", selection: kindBinding(draft.id)) {
-                ForEach(SetMeasure.Kind.allCases) { kind in
-                    Label(kind.label, systemImage: kind.symbol).tag(kind)
-                }
-            }
-        } label: {
-            Label("Measured in \(draft.kind.label)", systemImage: draft.kind.symbol)
-                .labelStyle(.iconOnly)
-                .font(.subheadline)
-                .frame(width: 30, height: 30)
-                .background(.quaternary, in: .circle)
-        }
-        .buttonStyle(.borderless)
-    }
+    // MARK: Drafts
 
     /// Maps each draft in a real (2+ member) superset to a label like "A1", "A2", "B1".
     private var supersetLabels: [UUID: String] {
@@ -292,26 +144,14 @@ struct CreateWorkoutView: View {
     }
 
     /// Looks the draft up by id on every access so reordering can't leave a stale index
-    /// wired to the wrong field.
-    private func numberBinding(
-        _ draftID: UUID,
-        _ keyPath: WritableKeyPath<WorkoutExerciseDraft, Int?>
-    ) -> Binding<Int?> {
+    /// wired to the wrong field. Falls back to the captured value for the instant a row
+    /// outlives its draft during a delete.
+    private func draftBinding(_ draft: WorkoutExerciseDraft) -> Binding<WorkoutExerciseDraft> {
         Binding(
-            get: { drafts.first { $0.id == draftID }?[keyPath: keyPath] ?? nil },
+            get: { drafts.first { $0.id == draft.id } ?? draft },
             set: { newValue in
-                guard let index = drafts.firstIndex(where: { $0.id == draftID }) else { return }
-                drafts[index][keyPath: keyPath] = newValue
-            }
-        )
-    }
-
-    private func kindBinding(_ draftID: UUID) -> Binding<SetMeasure.Kind> {
-        Binding(
-            get: { drafts.first { $0.id == draftID }?.kind ?? .reps },
-            set: { newValue in
-                guard let index = drafts.firstIndex(where: { $0.id == draftID }) else { return }
-                drafts[index].kind = newValue
+                guard let index = drafts.firstIndex(where: { $0.id == draft.id }) else { return }
+                drafts[index] = newValue
             }
         )
     }
@@ -497,6 +337,155 @@ struct CreateWorkoutView: View {
 
         modelContext.saveChanges()
         dismiss()
+    }
+}
+
+// MARK: - Subviews
+
+private struct WorkoutInfoSection: View {
+    @Binding var name: String
+    @Binding var date: Date
+
+    /// The day's other workouts, so a second session on a day is a deliberate choice.
+    let sameDay: [Workout]
+
+    var body: some View {
+        Section {
+            TextField("Workout Name", text: $name)
+                .autocorrectionDisabled()
+
+            DatePicker("Date", selection: $date, displayedComponents: .date)
+        } header: {
+            Text("Workout Info")
+        } footer: {
+            if sameDay.isEmpty {
+                Text("A day can hold more than one workout — a morning run and an evening lift are two separate workouts.")
+            } else {
+                Text("Already on \(date.formatted(.dateTime.month().day())): \(sameDay.map(\.name).formatted(.list(type: .and))). This one will be added alongside \(sameDay.count == 1 ? "it" : "them").")
+            }
+        }
+    }
+}
+
+/// One staged exercise: its name and superset badge, the measure menu, and the fields for
+/// this workout's sets and target.
+private struct DraftRow: View {
+    @Binding var draft: WorkoutExerciseDraft
+
+    /// "A1", "A2"… when the draft is in a real superset, otherwise nil.
+    let supersetLabel: String?
+    let canGroupWithPrevious: Bool
+    let onGroupWithPrevious: () -> Void
+    let onUngroup: () -> Void
+    let onRemove: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                if let supersetLabel {
+                    Text(supersetLabel)
+                        .font(.caption2.weight(.bold))
+                        .monospaced()
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(.tint, in: .capsule)
+                }
+                Text(draft.exercise.name)
+                    .font(.headline)
+                Spacer()
+                if draft.exercise.videoURL != nil {
+                    Image(systemName: "play.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.accent)
+                        .accessibilityLabel("Has demo video")
+                }
+                // Sits on the name line rather than beside the fields: three number boxes
+                // plus a picker on one line squeezed the fields until their labels wrapped.
+                MeasureMenu(kind: $draft.kind)
+            }
+
+            HStack(spacing: 12) {
+                if draft.kind != .untracked {
+                    NumberField(
+                        title: "Sets",
+                        value: $draft.sets,
+                        placeholder: "\(draft.setsPlaceholder)"
+                    )
+                }
+
+                switch draft.kind {
+                case .reps:
+                    NumberField(
+                        title: "Reps",
+                        value: $draft.reps,
+                        placeholder: "\(draft.exercise.measure.repCount ?? SetMeasure.defaultReps)"
+                    )
+                case .time:
+                    DurationField(
+                        title: "",
+                        seconds: $draft.durationSeconds,
+                        placeholder: draft.exercise.measure.seconds ?? SetMeasure.defaultSeconds
+                    )
+                case .untracked:
+                    Text("Nothing to count")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 0)
+
+                if let resolved = draft.resolvedPrescription {
+                    Text(resolved)
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.tertiary)
+                }
+            }
+        }
+        .padding(.vertical, 2)
+        .listRowBackground(Color.accentColor.opacity(supersetLabel == nil ? 0 : 0.07))
+        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+            if canGroupWithPrevious {
+                Button("Superset", systemImage: "link", action: onGroupWithPrevious)
+                    .tint(.accentColor)
+            }
+            if draft.supersetID != nil {
+                Button("Ungroup", systemImage: "scissors", action: onUngroup)
+                    .tint(.orange)
+            }
+        }
+        .contextMenu {
+            if canGroupWithPrevious {
+                Button("Superset with above", systemImage: "link", action: onGroupWithPrevious)
+            }
+            if draft.supersetID != nil {
+                Button("Remove from superset", systemImage: "scissors", action: onUngroup)
+            }
+            Button("Remove", systemImage: "trash", role: .destructive, action: onRemove)
+        }
+    }
+}
+
+/// A menu rather than a segmented control: three segments per row would crowd out the
+/// number fields, and the measure is picked once and then left alone.
+private struct MeasureMenu: View {
+    @Binding var kind: SetMeasure.Kind
+
+    var body: some View {
+        Menu {
+            Picker("Measured in", selection: $kind) {
+                ForEach(SetMeasure.Kind.allCases) { kind in
+                    Label(kind.label, systemImage: kind.symbol).tag(kind)
+                }
+            }
+        } label: {
+            Label("Measured in \(kind.label)", systemImage: kind.symbol)
+                .labelStyle(.iconOnly)
+                .font(.subheadline)
+                .frame(width: 30, height: 30)
+                .background(.quaternary, in: .circle)
+        }
+        .buttonStyle(.borderless)
     }
 }
 

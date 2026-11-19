@@ -27,12 +27,15 @@ struct SupersetDetailView: View {
 
     var body: some View {
         List {
+            let members = members
             if members.isEmpty {
-                emptyState
+                NoLongerSupersetSection()
             } else {
-                overviewSection
+                SupersetOverviewSection(workoutName: workout.name, members: members)
                 ForEach(members.enumerated(), id: \.element.id) { index, slot in
-                    memberSection(slot, position: index + 1)
+                    SupersetMemberSection(slot: slot, position: index + 1) {
+                        timerSlot = slot
+                    }
                 }
             }
         }
@@ -52,12 +55,14 @@ struct SupersetDetailView: View {
             SetTimerView(slot: slot)
         }
     }
+}
 
-    // MARK: Sections
+// MARK: - Subviews
 
-    /// Reachable by editing the group away while its screen is still on the stack, rather
-    /// than by tapping into it — hence a plain explanation instead of an error.
-    private var emptyState: some View {
+/// Reachable by editing the group away while its screen is still on the stack, rather
+/// than by tapping into it — hence a plain explanation instead of an error.
+private struct NoLongerSupersetSection: View {
+    var body: some View {
         Section {
             ContentUnavailableView(
                 "No Longer a Superset",
@@ -66,8 +71,13 @@ struct SupersetDetailView: View {
             )
         }
     }
+}
 
-    private var overviewSection: some View {
+private struct SupersetOverviewSection: View {
+    let workoutName: String
+    let members: [WorkoutExercise]
+
+    var body: some View {
         Section {
             Label(
                 "\(members.count) exercises, back-to-back",
@@ -80,7 +90,7 @@ struct SupersetDetailView: View {
                     .monospacedDigit()
             }
         } header: {
-            Text(workout.name)
+            Text(workoutName)
                 .textCase(nil)
         } footer: {
             Text("One set of each in order, then rest and repeat.")
@@ -92,9 +102,17 @@ struct SupersetDetailView: View {
         let parts = members.compactMap(\.prescription)
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
+}
 
-    @ViewBuilder
-    private func memberSection(_ slot: WorkoutExercise, position: Int) -> some View {
+/// One member's prescription, progress, demo video and notes.
+private struct SupersetMemberSection: View {
+    let slot: WorkoutExercise
+
+    /// 1-based position in the superset.
+    let position: Int
+    let onStartTimer: () -> Void
+
+    var body: some View {
         Section {
             if let sets = slot.sets {
                 LabeledContent("Sets", value: "\(sets)")
@@ -117,7 +135,7 @@ struct SupersetDetailView: View {
 
             if slot.isTimed {
                 Button {
-                    timerSlot = slot
+                    onStartTimer()
                 } label: {
                     Label(
                         slot.isComplete ? "Run Timer Again" : "Start Set Timer",

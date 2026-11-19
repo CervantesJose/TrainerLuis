@@ -49,15 +49,18 @@ struct ExercisePickerView: View {
 
                         Section {
                             ForEach(filtered) { exercise in
-                                row(for: exercise)
+                                PickerRow(
+                                    exercise: exercise,
+                                    isSelected: selection.contains(exercise.id),
+                                    isStaged: stagedIDs.contains(exercise.id)
+                                ) {
+                                    toggle(exercise)
+                                }
                             }
 
-
                             if !exercises.isEmpty {
-                                Button {
+                                Button("New Exercise", systemImage: "plus") {
                                     showingCreate = true
-                                } label: {
-                                    Label("New Exercise", systemImage: "plus")
                                 }
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .buttonStyle(.borderless)
@@ -84,38 +87,6 @@ struct ExercisePickerView: View {
         }
     }
 
-    private func row(for exercise: Exercise) -> some View {
-        let isSelected = selection.contains(exercise.id)
-
-        return Button {
-            toggle(exercise)
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
-                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
-
-                ExerciseRow(
-                    exercise: exercise,
-                    prescription: exercise.prescription,
-                    isTimed: exercise.isTimed
-                )
-
-                Spacer()
-
-                if stagedIDs.contains(exercise.id) {
-                    Text("In workout")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(.quaternary, in: .capsule)
-                }
-            }
-        }
-        .foregroundStyle(.primary)
-    }
-
     private func toggle(_ exercise: Exercise) {
         if let index = selection.firstIndex(of: exercise.id) {
             selection.remove(at: index)
@@ -129,6 +100,46 @@ struct ExercisePickerView: View {
         let byID = Dictionary(exercises.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         onAdd(selection.compactMap { byID[$0] }, addAsSuperset)
         dismiss()
+    }
+}
+
+// MARK: - Subviews
+
+private struct PickerRow: View {
+    let exercise: Exercise
+    let isSelected: Bool
+
+    /// Already in the workout — flagged, but still selectable.
+    let isStaged: Bool
+    let onToggle: () -> Void
+
+    var body: some View {
+        Button(action: onToggle) {
+            HStack(spacing: 12) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
+
+                ExerciseRow(
+                    exercise: exercise,
+                    prescription: exercise.prescription,
+                    isTimed: exercise.isTimed
+                )
+
+                Spacer()
+
+                if isStaged {
+                    Text("In workout")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(.quaternary, in: .capsule)
+                }
+            }
+        }
+        .foregroundStyle(.primary)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 

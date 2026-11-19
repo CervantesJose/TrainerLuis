@@ -27,9 +27,6 @@ struct SetTimerView: View {
     /// Bumped each time a set runs out with the app on screen, to fire the success haptic.
     @State private var finishedSetCount = 0
 
-    /// The countdown's size, scaled with Dynamic Type from a large-title baseline.
-    @ScaledMetric(relativeTo: .largeTitle) private var timeFontSize = 54.0
-
     private var setLength: TimeInterval {
         TimeInterval(slot.setSeconds ?? SetMeasure.defaultSeconds)
     }
@@ -44,9 +41,23 @@ struct SetTimerView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 28) {
-                header
-                dial
-                controls
+                TimerHeader(slot: slot)
+                TimerDial(
+                    slot: slot,
+                    runStart: runStart,
+                    endDate: endDate,
+                    staticRemaining: staticRemaining,
+                    setLength: setLength
+                )
+                TimerControls(
+                    slot: slot,
+                    isRunning: isRunning,
+                    isPaused: pausedRemaining != nil,
+                    onStartOrPause: { isRunning ? pause() : start() },
+                    onSkip: recordSet,
+                    onResetSet: resetSet,
+                    onResetProgress: resetProgress
+                )
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 24)
@@ -80,145 +91,6 @@ struct SetTimerView: View {
             SetTimerNotifier.cancel(id: notificationID)
             keepScreenAwake(false)
         }
-    }
-
-    // MARK: Pieces
-
-    private var header: some View {
-        VStack(spacing: 6) {
-            Text(slot.exercise?.name ?? "Exercise")
-                .font(.title2.bold())
-                .multilineTextAlignment(.center)
-
-            Text(statusText)
-                .font(.subheadline)
-                .foregroundStyle(slot.isComplete ? .green : .secondary)
-
-            if let prescription = slot.prescription {
-                Text(prescription)
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.tertiary)
-            }
-        }
-    }
-
-    private var statusText: String {
-        if slot.isComplete {
-            return slot.totalSets > 1 ? "All \(slot.totalSets) sets done" : "Done"
-        }
-        guard let next = slot.nextSet else { return "Done" }
-        return slot.totalSets > 1 ? "Set \(next) of \(slot.totalSets)" : "Ready"
-    }
-
-    private var dial: some View {
-        ZStack {
-            Circle()
-                .stroke(.quaternary, lineWidth: 14)
-
-            if let endDate, let runStart {
-                // Only animates while a set is running. A paused dial has nothing to redraw.
-                TimelineView(.animation(minimumInterval: 1.0 / 20)) { context in
-                    arc(progress: progress(remaining: endDate.timeIntervalSince(context.date)))
-                }
-                Text(
-                    timerInterval: runStart...endDate,
-                    pauseTime: nil,
-                    countsDown: true,
-                    showsHours: setLength >= 3600
-                )
-                .font(timeFont)
-                .padding(.horizontal, 28)
-            } else {
-                arc(progress: progress(remaining: staticRemaining))
-                Text(SetMeasure.timeText(Int(staticRemaining.rounded())))
-                    .font(timeFont)
-                    .padding(.horizontal, 28)
-            }
-        }
-        // The dial is fixed, so at the largest text sizes the time shrinks to fit inside it.
-        .lineLimit(1)
-        .minimumScaleFactor(0.4)
-        .frame(width: 240, height: 240)
-        .animation(.default, value: slot.setsDone)
-    }
-
-    private var timeFont: Font {
-        .system(size: timeFontSize, weight: .semibold, design: .rounded).monospacedDigit()
-    }
-
-    private func arc(progress: Double) -> some View {
-        Circle()
-            .trim(from: 0, to: progress)
-            .stroke(
-                slot.isComplete ? Color.green : Color.accentColor,
-                style: StrokeStyle(lineWidth: 14, lineCap: .round)
-            )
-            .rotationEffect(.degrees(-90))
-    }
-
-    /// How much of the current set has elapsed, 0...1.
-    private func progress(remaining: TimeInterval) -> Double {
-        guard setLength > 0 else { return 0 }
-        return min(1, max(0, 1 - remaining / setLength))
-    }
-
-    @ViewBuilder
-    private var controls: some View {
-        VStack(spacing: 12) {
-            if slot.isComplete {
-                Button {
-                    resetProgress()
-                } label: {
-                    Label("Start Over", systemImage: "arrow.counterclockwise")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-            } else {
-                Button {
-                    isRunning ? pause() : start()
-                } label: {
-                    Label(
-                        isRunning ? "Pause" : (pausedRemaining != nil ? "Resume" : startLabel),
-                        systemImage: isRunning ? "pause.fill" : "play.fill"
-                    )
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-
-                HStack(spacing: 12) {
-                    Button {
-                        recordSet()
-                    } label: {
-                        Label("Skip Set", systemImage: "forward.end.fill")
-                            .frame(maxWidth: .infinity)
-                    }
-
-                    Button {
-                        resetSet()
-                    } label: {
-                        Label("Reset", systemImage: "gobackward")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .disabled(!isRunning && pausedRemaining == nil)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-            }
-
-            if slot.setsDone > 0 && !slot.isComplete {
-                Button("Clear \(slot.setsDone) recorded set\(slot.setsDone == 1 ? "" : "s")") {
-                    resetProgress()
-                }
-                .font(.footnote)
-            }
-        }
-    }
-
-    private var startLabel: String {
-        guard slot.totalSets > 1, let next = slot.nextSet else { return "Start" }
-        return "Start Set \(next)"
     }
 
     // MARK: Actions
@@ -290,6 +162,174 @@ struct SetTimerView: View {
     /// A countdown you're watching shouldn't be interrupted by the display sleeping, but the override has to be lifted again or it outlives the timer.
     private func keepScreenAwake(_ awake: Bool) {
         UIApplication.shared.isIdleTimerDisabled = awake
+    }
+}
+
+// MARK: - Subviews
+
+private struct TimerHeader: View {
+    let slot: WorkoutExercise
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Text(slot.exercise?.name ?? "Exercise")
+                .font(.title2.bold())
+                .multilineTextAlignment(.center)
+
+            Text(statusText)
+                .font(.subheadline)
+                .foregroundStyle(slot.isComplete ? .green : .secondary)
+
+            if let prescription = slot.prescription {
+                Text(prescription)
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.tertiary)
+            }
+        }
+    }
+
+    private var statusText: String {
+        if slot.isComplete {
+            return slot.totalSets > 1 ? "All \(slot.totalSets) sets done" : "Done"
+        }
+        guard let next = slot.nextSet else { return "Done" }
+        return slot.totalSets > 1 ? "Set \(next) of \(slot.totalSets)" : "Ready"
+    }
+}
+
+/// The countdown ring and time. Animates only while a set is running.
+private struct TimerDial: View {
+    let slot: WorkoutExercise
+    let runStart: Date?
+    let endDate: Date?
+
+    /// Seconds showing while nothing is counting: the paused remainder, or a full set.
+    let staticRemaining: TimeInterval
+    let setLength: TimeInterval
+
+    /// The countdown's size, scaled with Dynamic Type from a large-title baseline.
+    @ScaledMetric(relativeTo: .largeTitle) private var timeFontSize = 54.0
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(.quaternary, lineWidth: 14)
+
+            if let endDate, let runStart {
+                // Only animates while a set is running. A paused dial has nothing to redraw.
+                TimelineView(.animation(minimumInterval: 1.0 / 20)) { context in
+                    ProgressArc(
+                        progress: progress(remaining: endDate.timeIntervalSince(context.date)),
+                        isComplete: slot.isComplete
+                    )
+                }
+                Text(
+                    timerInterval: runStart...endDate,
+                    pauseTime: nil,
+                    countsDown: true,
+                    showsHours: setLength >= 3600
+                )
+                .font(timeFont)
+                .padding(.horizontal, 28)
+            } else {
+                ProgressArc(progress: progress(remaining: staticRemaining), isComplete: slot.isComplete)
+                Text(SetMeasure.timeText(Int(staticRemaining.rounded())))
+                    .font(timeFont)
+                    .padding(.horizontal, 28)
+            }
+        }
+        // The dial is fixed, so at the largest text sizes the time shrinks to fit inside it.
+        .lineLimit(1)
+        .minimumScaleFactor(0.4)
+        .frame(width: 240, height: 240)
+        .animation(.default, value: slot.setsDone)
+    }
+
+    private var timeFont: Font {
+        .system(size: timeFontSize, weight: .semibold, design: .rounded).monospacedDigit()
+    }
+
+    /// How much of the current set has elapsed, 0...1.
+    private func progress(remaining: TimeInterval) -> Double {
+        guard setLength > 0 else { return 0 }
+        return min(1, max(0, 1 - remaining / setLength))
+    }
+}
+
+private struct ProgressArc: View {
+    /// How much of the set has elapsed, 0...1.
+    let progress: Double
+    let isComplete: Bool
+
+    var body: some View {
+        Circle()
+            .trim(from: 0, to: progress)
+            .stroke(
+                isComplete ? Color.green : Color.accentColor,
+                style: StrokeStyle(lineWidth: 14, lineCap: .round)
+            )
+            .rotationEffect(.degrees(-90))
+    }
+}
+
+private struct TimerControls: View {
+    let slot: WorkoutExercise
+    let isRunning: Bool
+    let isPaused: Bool
+    let onStartOrPause: () -> Void
+    let onSkip: () -> Void
+    let onResetSet: () -> Void
+    let onResetProgress: () -> Void
+
+    var body: some View {
+        VStack(spacing: 12) {
+            if slot.isComplete {
+                Button(action: onResetProgress) {
+                    Label("Start Over", systemImage: "arrow.counterclockwise")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+            } else {
+                Button(action: onStartOrPause) {
+                    Label(
+                        isRunning ? "Pause" : (isPaused ? "Resume" : startLabel),
+                        systemImage: isRunning ? "pause.fill" : "play.fill"
+                    )
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+
+                HStack(spacing: 12) {
+                    Button(action: onSkip) {
+                        Label("Skip Set", systemImage: "forward.end.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+
+                    Button(action: onResetSet) {
+                        Label("Reset", systemImage: "gobackward")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .disabled(!isRunning && !isPaused)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+            }
+
+            if slot.setsDone > 0 && !slot.isComplete {
+                Button(
+                    "Clear \(slot.setsDone) recorded set\(slot.setsDone == 1 ? "" : "s")",
+                    action: onResetProgress
+                )
+                .font(.footnote)
+            }
+        }
+    }
+
+    private var startLabel: String {
+        guard slot.totalSets > 1, let next = slot.nextSet else { return "Start" }
+        return "Start Set \(next)"
     }
 }
 

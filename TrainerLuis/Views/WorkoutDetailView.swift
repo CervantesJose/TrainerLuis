@@ -40,7 +40,7 @@ struct WorkoutDetailView: View {
                         withAnimation { workout.isCompleted.toggle() }
                         modelContext.saveChanges()
                     } label: {
-                        completionBadge
+                        CompletionBadge(isCompleted: workout.isCompleted)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(workout.isCompleted ? "Mark Incomplete" : "Mark Complete")
@@ -137,17 +137,23 @@ struct WorkoutDetailView: View {
             SupersetDetailView(workout: workout, supersetID: groupID)
         }
     }
+}
 
-    private var completionBadge: some View {
+// MARK: - Subviews
+
+private struct CompletionBadge: View {
+    let isCompleted: Bool
+
+    var body: some View {
         HStack(spacing: 4) {
-            Image(systemName: workout.isCompleted ? "checkmark.circle.fill" : "circle")
-            Text(workout.isCompleted ? "Done" : "Pending")
+            Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
+            Text(isCompleted ? "Done" : "Pending")
                 .font(.caption.bold())
         }
-        .foregroundStyle(workout.isCompleted ? .green : .orange)
+        .foregroundStyle(isCompleted ? .green : .orange)
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background((workout.isCompleted ? Color.green : Color.orange).opacity(0.15), in: .capsule)
+        .background((isCompleted ? Color.green : Color.orange).opacity(0.15), in: .capsule)
     }
 }
 

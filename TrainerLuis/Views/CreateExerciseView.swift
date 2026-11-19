@@ -32,7 +32,15 @@ struct CreateExerciseView: View {
                     Text("Exercise Info")
                 }
 
-                measureSection
+                MeasureDefaultsSection(
+                    kind: $kind,
+                    sets: $sets,
+                    reps: $reps,
+                    durationSeconds: $durationSeconds,
+                    setsPlaceholder: setsPlaceholder,
+                    repsPlaceholder: exercise?.measure.repCount ?? SetMeasure.defaultReps,
+                    secondsPlaceholder: exercise?.measure.seconds ?? SetMeasure.defaultSeconds
+                )
 
                 Section {
                     TextField("YouTube URL (optional)", text: $videoURL)
@@ -84,60 +92,6 @@ struct CreateExerciseView: View {
                 }
             }
             .onAppear(perform: load)
-        }
-    }
-
-    // MARK: Measure
-
-    /// The measure picker decides which fields exist, so there's no way to save a rep count
-    /// and a duration that disagree about what a set is.
-    private var measureSection: some View {
-        Section {
-            Picker("Measured in", selection: $kind) {
-                ForEach(SetMeasure.Kind.allCases) { kind in
-                    Label(kind.label, systemImage: kind.symbol).tag(kind)
-                }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-
-            if kind != .untracked {
-                NumberField(title: "Sets", value: $sets, placeholder: "\(setsPlaceholder)")
-            }
-
-            switch kind {
-            case .reps:
-                NumberField(
-                    title: "Reps",
-                    value: $reps,
-                    placeholder: "\(exercise?.measure.repCount ?? SetMeasure.defaultReps)"
-                )
-            case .time:
-                DurationField(
-                    title: "Each set",
-                    seconds: $durationSeconds,
-                    placeholder: exercise?.measure.seconds ?? SetMeasure.defaultSeconds,
-                    showsTotal: true
-                )
-            case .untracked:
-                EmptyView()
-            }
-        } header: {
-            Text("Defaults")
-        } footer: {
-            Text(measureFooter)
-        }
-    }
-
-    private var measureFooter: String {
-        let scope = "Starting values used when this exercise is added to a workout. Each workout keeps its own, so changing these won't alter workouts you've already built."
-        switch kind {
-        case .reps:
-            return scope
-        case .time:
-            return "Each set runs for this long, and can be counted down from the workout. A single set is one continuous effort — a 15 minute jog. \(scope)"
-        case .untracked:
-            return "No sets and nothing to count — for warm-ups and mobility work that you just tick off."
         }
     }
 
@@ -199,6 +153,68 @@ struct CreateExerciseView: View {
 
         modelContext.saveChanges()
         dismiss()
+    }
+}
+
+// MARK: - Subviews
+
+/// The measure picker decides which fields exist, so there's no way to save a rep count
+/// and a duration that disagree about what a set is.
+private struct MeasureDefaultsSection: View {
+    @Binding var kind: SetMeasure.Kind
+    @Binding var sets: Int?
+    @Binding var reps: Int?
+    @Binding var durationSeconds: Int?
+
+    /// What each blank field will save as, shown as its placeholder.
+    let setsPlaceholder: Int
+    let repsPlaceholder: Int
+    let secondsPlaceholder: Int
+
+    var body: some View {
+        Section {
+            Picker("Measured in", selection: $kind) {
+                ForEach(SetMeasure.Kind.allCases) { kind in
+                    Label(kind.label, systemImage: kind.symbol).tag(kind)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+
+            if kind != .untracked {
+                NumberField(title: "Sets", value: $sets, placeholder: "\(setsPlaceholder)")
+            }
+
+            switch kind {
+            case .reps:
+                NumberField(title: "Reps", value: $reps, placeholder: "\(repsPlaceholder)")
+            case .time:
+                DurationField(
+                    title: "Each set",
+                    seconds: $durationSeconds,
+                    placeholder: secondsPlaceholder,
+                    showsTotal: true
+                )
+            case .untracked:
+                EmptyView()
+            }
+        } header: {
+            Text("Defaults")
+        } footer: {
+            Text(footer)
+        }
+    }
+
+    private var footer: String {
+        let scope = "Starting values used when this exercise is added to a workout. Each workout keeps its own, so changing these won't alter workouts you've already built."
+        switch kind {
+        case .reps:
+            return scope
+        case .time:
+            return "Each set runs for this long, and can be counted down from the workout. A single set is one continuous effort — a 15 minute jog. \(scope)"
+        case .untracked:
+            return "No sets and nothing to count — for warm-ups and mobility work that you just tick off."
+        }
     }
 }
 

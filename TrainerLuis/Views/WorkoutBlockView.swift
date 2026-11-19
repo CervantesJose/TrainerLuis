@@ -32,14 +32,17 @@ struct WorkoutBlockView: View {
     var body: some View {
         switch block {
         case .single(let slot):
-            slotRow(slot, label: nil, superset: nil)
+            row(for: slot, label: nil, superset: nil)
 
         case .superset(let groupID, let members):
             VStack(alignment: .leading, spacing: 8) {
-                supersetHeader(groupID: groupID, count: members.count)
+                SupersetHeader(
+                    count: members.count,
+                    onOpen: onOpenSuperset.map { open in { open(groupID) } }
+                )
 
                 ForEach(members.enumerated(), id: \.element.id) { index, slot in
-                    slotRow(slot, label: "\(index + 1)", superset: groupID)
+                    row(for: slot, label: "\(index + 1)", superset: groupID)
                 }
             }
             .padding(.vertical, 4)
@@ -47,9 +50,45 @@ struct WorkoutBlockView: View {
         }
     }
 
-    @ViewBuilder
-    private func supersetHeader(groupID: UUID, count: Int) -> some View {
-        let content = HStack(spacing: 6) {
+    private func row(for slot: WorkoutExercise, label: String?, superset: UUID?) -> SlotRow {
+        SlotRow(
+            slot: slot,
+            label: label,
+            superset: superset,
+            showsNavigation: showsNavigation,
+            onStartTimer: onStartTimer,
+            onShowDetails: onShowDetails,
+            onOpenSuperset: onOpenSuperset
+        )
+    }
+}
+
+// MARK: - Subviews
+
+private struct SupersetHeader: View {
+    let count: Int
+
+    /// Opens the superset's own screen. Nil where rows are inert, which also drops the chevron.
+    let onOpen: (() -> Void)?
+
+    var body: some View {
+        if let onOpen {
+            Button(action: onOpen) {
+                SupersetHeaderLabel(count: count, showsChevron: true)
+            }
+            .buttonStyle(.plain)
+        } else {
+            SupersetHeaderLabel(count: count, showsChevron: false)
+        }
+    }
+}
+
+private struct SupersetHeaderLabel: View {
+    let count: Int
+    let showsChevron: Bool
+
+    var body: some View {
+        HStack(spacing: 6) {
             Image(systemName: "link")
                 .font(.caption2)
             Text("Superset")
@@ -58,33 +97,38 @@ struct WorkoutBlockView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Spacer(minLength: 8)
-            if onOpenSuperset != nil {
+            if showsChevron {
                 Image(systemName: "chevron.right")
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.tertiary)
             }
         }
         .foregroundStyle(.accent)
-
-        if let onOpenSuperset {
-            Button { onOpenSuperset(groupID) } label: { content }
-                .buttonStyle(.plain)
-        } else {
-            content
-        }
     }
+}
 
-    /// - Parameter superset: the group this row belongs to, or nil for a lone exercise. A
-    ///   member's tap opens the group rather than the exercise, so the whole block leads to
-    ///   the one screen.
-    @ViewBuilder
-    private func slotRow(_ slot: WorkoutExercise, label: String?, superset: UUID?) -> some View {
+/// One exercise in a block, with the tap behavior its kind calls for.
+private struct SlotRow: View {
+    let slot: WorkoutExercise
+
+    /// The member's 1-based position in its superset, or nil for a lone exercise.
+    let label: String?
+
+    /// The group this row belongs to, or nil for a lone exercise. A member's tap opens the
+    /// group rather than the exercise, so the whole block leads to the one screen.
+    let superset: UUID?
+    let showsNavigation: Bool
+    let onStartTimer: ((WorkoutExercise) -> Void)?
+    let onShowDetails: ((Exercise) -> Void)?
+    let onOpenSuperset: ((UUID) -> Void)?
+
+    var body: some View {
         if slot.isTimed, let onStartTimer {
             Button {
                 onStartTimer(slot)
             } label: {
                 HStack(spacing: 8) {
-                    slotContent(slot, label: label)
+                    SlotContent(slot: slot, label: label)
                     Spacer(minLength: 8)
                     Image(systemName: slot.isComplete ? "checkmark.circle.fill" : "play.circle.fill")
                         .font(.title2)
@@ -94,17 +138,13 @@ struct WorkoutBlockView: View {
             .foregroundStyle(.primary)
             .contextMenu {
                 if let superset, let onOpenSuperset {
-                    Button {
+                    Button("Superset Details", systemImage: "link") {
                         onOpenSuperset(superset)
-                    } label: {
-                        Label("Superset Details", systemImage: "link")
                     }
                 }
                 if let exercise = slot.exercise, let onShowDetails {
-                    Button {
+                    Button("Exercise Details", systemImage: "info.circle") {
                         onShowDetails(exercise)
-                    } label: {
-                        Label("Exercise Details", systemImage: "info.circle")
                     }
                 }
             }
@@ -113,21 +153,26 @@ struct WorkoutBlockView: View {
                 onOpenSuperset(superset)
             } label: {
                 HStack(spacing: 8) {
-                    slotContent(slot, label: label)
+                    SlotContent(slot: slot, label: label)
                     Spacer(minLength: 8)
                 }
             }
             .buttonStyle(.plain)
         } else if superset == nil, showsNavigation, let exercise = slot.exercise {
             NavigationLink(value: exercise) {
-                slotContent(slot, label: label)
+                SlotContent(slot: slot, label: label)
             }
         } else {
-            slotContent(slot, label: label)
+            SlotContent(slot: slot, label: label)
         }
     }
+}
 
-    private func slotContent(_ slot: WorkoutExercise, label: String?) -> some View {
+private struct SlotContent: View {
+    let slot: WorkoutExercise
+    let label: String?
+
+    var body: some View {
         HStack(spacing: 8) {
             if let label {
                 Text(label)
