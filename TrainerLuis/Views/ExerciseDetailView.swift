@@ -9,12 +9,21 @@ struct ExerciseDetailView: View {
     var body: some View {
         List {
             Section {
-                LabeledContent("Sets", value: "\(exercise.sets)")
-                LabeledContent("Reps", value: "\(exercise.reps)")
+                if let sets = exercise.sets {
+                    LabeledContent("Sets", value: "\(sets)")
+                }
+                switch exercise.measure {
+                case .reps(let count):
+                    LabeledContent("Reps", value: "\(count)")
+                case .time(let seconds):
+                    LabeledContent("Time per set", value: SetMeasure.unitTimeText(seconds))
+                case .untracked:
+                    LabeledContent("Target", value: "None")
+                }
             } header: {
                 Text("Defaults")
             } footer: {
-                Text("Used when adding this exercise to a workout. Each workout stores its own sets and reps.")
+                Text("Used when adding this exercise to a workout. Each workout stores its own sets and targets.")
             }
 
             if exercise.workoutUsageCount > 0 {

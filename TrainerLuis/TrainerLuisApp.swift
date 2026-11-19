@@ -19,7 +19,7 @@ struct TrainerLuisApp: App {
         .modelContainer(container)
     }
 
-    static let schema = Schema([Workout.self, Exercise.self, WorkoutExercise.self])
+    static let schema = Schema(versionedSchema: AppSchemaV2.self)
 
     /// Builds the on-disk container explicitly rather than via `.modelContainer(for:)`.
     ///
@@ -37,6 +37,7 @@ struct TrainerLuisApp: App {
         do {
             return try ModelContainer(
                 for: schema,
+                migrationPlan: AppMigrationPlan.self,
                 configurations: ModelConfiguration(schema: schema, url: storeURL)
             )
         } catch {
@@ -53,6 +54,7 @@ struct TrainerLuisApp: App {
         do {
             return try ModelContainer(
                 for: schema,
+                migrationPlan: AppMigrationPlan.self,
                 configurations: ModelConfiguration(schema: schema, url: storeURL)
             )
         } catch {

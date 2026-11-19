@@ -8,6 +8,17 @@ struct WorkoutDetailView: View {
     @State private var showingEditWorkout = false
     @State private var showingDuplicate = false
 
+    /// The slot whose countdown is on screen.
+    @State private var timerSlot: WorkoutExercise?
+
+    /// Pushed for a timed row's "Exercise Details", which can't use a `NavigationLink`
+    /// because the row's own tap starts the timer.
+    @State private var detailExercise: Exercise?
+
+    /// The superset whose combined screen is pushed. Held as the group id rather than the
+    /// block so the pushed screen re-resolves its members after an edit.
+    @State private var detailSupersetID: UUID?
+
     var body: some View {
         List {
             Section {
@@ -42,10 +53,18 @@ struct WorkoutDetailView: View {
                         Label("Add Exercises", systemImage: "plus.circle.fill")
                     }
                 } else {
-                    // Read-only here: all structural editing — sets, reps, supersets, order —
-                    // happens in the one editor, so there's a single place it can go wrong.
+                    // Read-only here: all structural editing — sets, measures, supersets,
+                    // order — happens in the one editor, so there's a single place it can go
+                    // wrong. Running a timer isn't editing: it records what was performed,
+                    // which is the one thing that belongs on this screen.
                     ForEach(workout.blocks) { block in
-                        WorkoutBlockView(block: block, showsNavigation: true)
+                        WorkoutBlockView(
+                            block: block,
+                            showsNavigation: true,
+                            onStartTimer: { timerSlot = $0 },
+                            onShowDetails: { detailExercise = $0 },
+                            onOpenSuperset: { detailSupersetID = $0 }
+                        )
                     }
                 }
             } header: {
@@ -101,6 +120,15 @@ struct WorkoutDetailView: View {
         }
         .sheet(isPresented: $showingDuplicate) {
             DuplicateWorkoutView(source: workout)
+        }
+        .sheet(item: $timerSlot) { slot in
+            SetTimerView(slot: slot)
+        }
+        .navigationDestination(item: $detailExercise) { exercise in
+            ExerciseDetailView(exercise: exercise)
+        }
+        .navigationDestination(item: $detailSupersetID) { groupID in
+            SupersetDetailView(workout: workout, supersetID: groupID)
         }
     }
 

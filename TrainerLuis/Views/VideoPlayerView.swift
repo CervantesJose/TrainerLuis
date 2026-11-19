@@ -11,6 +11,7 @@ struct VideoPlayerView: UIViewRepresentable {
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.scrollView.isScrollEnabled = false
         webView.backgroundColor = .black
+        webView.pauseAllMediaPlayback(completionHandler: nil)
         return webView
     }
 

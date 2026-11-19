@@ -31,7 +31,7 @@ struct ExerciseLibraryView: View {
                             NavigationLink {
                                 ExerciseDetailView(exercise: exercise)
                             } label: {
-                                ExerciseRow(exercise: exercise, showsDefaultHint: true)
+                                ExerciseRow(library: exercise)
                             }
                         }
                         .onDelete(perform: requestDelete)

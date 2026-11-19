@@ -18,9 +18,13 @@ struct NumberField: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Text(title)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            // Skipped when empty so a caller composing several fields into one row — see
+            // ``DurationField`` — doesn't pay for an invisible label's leading space.
+            if !title.isEmpty {
+                Text(title)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
 
             TextField(placeholder, text: $text)
                 .keyboardType(.numberPad)

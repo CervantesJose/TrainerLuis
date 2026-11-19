@@ -116,9 +116,9 @@ struct CreateWorkoutView: View {
             }
         } footer: {
             if drafts.isEmpty {
-                Text("Add the movements for this workout. Sets and reps here apply to this workout only — the library keeps its own defaults.")
+                Text("Add the movements for this workout. Sets and targets here apply to this workout only — the library keeps its own defaults.")
             } else {
-                Text("Swipe a row right to superset it with the one above.")
+                Text("Swipe a row right to superset it with the one above. Tap a row's measure button to switch it between reps, a timed set, and nothing to count.")
             }
         }
     }
@@ -131,7 +131,7 @@ struct CreateWorkoutView: View {
                 Label("Copy from an existing workout", systemImage: "doc.on.doc")
             }
         } footer: {
-            Text("Reuses that workout's exercises, sets, reps and supersets as a starting point.")
+            Text("Reuses that workout's exercises, sets, targets and supersets as a starting point.")
         }
     }
 
@@ -160,20 +160,46 @@ struct CreateWorkoutView: View {
                         .font(.caption)
                         .foregroundStyle(.accent)
                 }
+                // Sits on the name line rather than beside the fields: three number boxes
+                // plus a picker on one line squeezed the fields until their labels wrapped.
+                measureMenu(for: draft)
             }
 
-            HStack(spacing: 16) {
-                NumberField(
-                    title: "Sets",
-                    value: numberBinding(draft.id, \.sets),
-                    placeholder: "\(draft.exercise.sets)"
-                )
-                NumberField(
-                    title: "Reps",
-                    value: numberBinding(draft.id, \.reps),
-                    placeholder: "\(draft.exercise.reps)"
-                )
-                Spacer()
+            HStack(spacing: 12) {
+                if draft.kind != .untracked {
+                    NumberField(
+                        title: "Sets",
+                        value: numberBinding(draft.id, \.sets),
+                        placeholder: "\(draft.setsPlaceholder)"
+                    )
+                }
+
+                switch draft.kind {
+                case .reps:
+                    NumberField(
+                        title: "Reps",
+                        value: numberBinding(draft.id, \.reps),
+                        placeholder: "\(draft.exercise.measure.repCount ?? SetMeasure.defaultReps)"
+                    )
+                case .time:
+                    DurationField(
+                        title: "",
+                        seconds: numberBinding(draft.id, \.durationSeconds),
+                        placeholder: draft.exercise.measure.seconds ?? SetMeasure.defaultSeconds
+                    )
+                case .untracked:
+                    Text("Nothing to count")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 0)
+
+                if let resolved = draft.resolvedPrescription {
+                    Text(resolved)
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.tertiary)
+                }
             }
         }
         .padding(.vertical, 2)
@@ -219,6 +245,24 @@ struct CreateWorkoutView: View {
         }
     }
 
+    /// A menu rather than a segmented control: three segments per row would crowd out the
+    /// number fields, and the measure is picked once and then left alone.
+    private func measureMenu(for draft: WorkoutExerciseDraft) -> some View {
+        Menu {
+            Picker("Measured in", selection: kindBinding(draft.id)) {
+                ForEach(SetMeasure.Kind.allCases) { kind in
+                    Label(kind.label, systemImage: kind.symbol).tag(kind)
+                }
+            }
+        } label: {
+            Image(systemName: draft.kind.symbol)
+                .font(.subheadline)
+                .frame(width: 30, height: 30)
+                .background(Circle().fill(.quaternary))
+        }
+        .buttonStyle(.borderless)
+    }
+
     /// Maps each draft in a real (2+ member) superset to a label like "A1", "A2", "B1".
     private var supersetLabels: [UUID: String] {
         var memberCounts: [UUID: Int] = [:]
@@ -261,6 +305,16 @@ struct CreateWorkoutView: View {
         )
     }
 
+    private func kindBinding(_ draftID: UUID) -> Binding<SetMeasure.Kind> {
+        Binding(
+            get: { drafts.first { $0.id == draftID }?.kind ?? .reps },
+            set: { newValue in
+                guard let index = drafts.firstIndex(where: { $0.id == draftID }) else { return }
+                drafts[index].kind = newValue
+            }
+        )
+    }
+
     // MARK: Draft mutations
 
     private func add(_ exercises: [Exercise], asSuperset: Bool) {
@@ -287,7 +341,9 @@ struct CreateWorkoutView: View {
             }
             var draft = WorkoutExerciseDraft(exercise: exercise, supersetID: groupID)
             draft.sets = slot.sets
-            draft.reps = slot.reps
+            draft.kind = slot.measure.kind
+            draft.reps = slot.measure.repCount
+            draft.durationSeconds = slot.measure.seconds
             copied.append(draft)
         }
 
@@ -420,15 +476,17 @@ struct CreateWorkoutView: View {
         for (index, draft) in drafts.enumerated() {
             if let slot = draft.existing {
                 slot.order = index
-                slot.sets = max(1, draft.resolvedSets)
-                slot.reps = max(1, draft.resolvedReps)
+                slot.sets = draft.resolvedSets
+                slot.measure = draft.resolvedMeasure
                 slot.supersetID = draft.supersetID
+                // Editing 5 sets down to 3 shouldn't leave the slot claiming 5 performed.
+                slot.completedSets = slot.setsDone
             } else {
                 let slot = WorkoutExercise(
                     exercise: draft.exercise,
                     order: index,
                     sets: draft.resolvedSets,
-                    reps: draft.resolvedReps,
+                    measure: draft.resolvedMeasure,
                     supersetID: draft.supersetID
                 )
                 modelContext.insert(slot)

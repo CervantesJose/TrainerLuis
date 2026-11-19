@@ -47,8 +47,6 @@ struct DayCell: View {
     }
 }
 
-#if DEBUG
-
 #Preview("Every state") {
     HStack(spacing: 2) {
         DayCell(date: .now, isSelected: false, isToday: false, dotColors: [])
@@ -63,5 +61,3 @@ struct DayCell: View {
     }
     .padding()
 }
-
-#endif

@@ -8,16 +8,17 @@ struct CreateExerciseView: View {
     var exercise: Exercise? // nil = create, non-nil = edit
 
     @State private var name = ""
+    /// Which measure the form is editing. Held separately from the values so switching to
+    /// Time and back doesn't discard what was typed into Reps.
+    @State private var kind: SetMeasure.Kind = .reps
     /// nil while the field is blank; the placeholder shows what will be used instead.
     @State private var sets: Int?
     @State private var reps: Int?
+    @State private var durationSeconds: Int?
     @State private var videoURL = ""
     @State private var notes = ""
     @State private var showingVideoPreview = false
     @State private var hasLoaded = false
-
-    private static let fallbackSets = 3
-    private static let fallbackReps = 10
 
     var isEditing: Bool { exercise != nil }
 
@@ -31,14 +32,7 @@ struct CreateExerciseView: View {
                     Text("Exercise Info")
                 }
 
-                Section {
-                    NumberField(title: "Sets", value: $sets, placeholder: "\(Self.fallbackSets)")
-                    NumberField(title: "Reps", value: $reps, placeholder: "\(Self.fallbackReps)")
-                } header: {
-                    Text("Defaults")
-                } footer: {
-                    Text("Starting values used when this exercise is added to a workout. Each workout keeps its own sets and reps, so changing these won't alter workouts you've already built.")
-                }
+                measureSection
 
                 Section {
                     TextField("YouTube URL (optional)", text: $videoURL)
@@ -93,34 +87,110 @@ struct CreateExerciseView: View {
         }
     }
 
+    // MARK: Measure
+
+    /// The measure picker decides which fields exist, so there's no way to save a rep count
+    /// and a duration that disagree about what a set is.
+    private var measureSection: some View {
+        Section {
+            Picker("Measured in", selection: $kind) {
+                ForEach(SetMeasure.Kind.allCases) { kind in
+                    Label(kind.label, systemImage: kind.symbol).tag(kind)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+
+            if kind != .untracked {
+                NumberField(title: "Sets", value: $sets, placeholder: "\(setsPlaceholder)")
+            }
+
+            switch kind {
+            case .reps:
+                NumberField(
+                    title: "Reps",
+                    value: $reps,
+                    placeholder: "\(exercise?.measure.repCount ?? SetMeasure.defaultReps)"
+                )
+            case .time:
+                DurationField(
+                    title: "Each set",
+                    seconds: $durationSeconds,
+                    placeholder: exercise?.measure.seconds ?? SetMeasure.defaultSeconds,
+                    showsTotal: true
+                )
+            case .untracked:
+                EmptyView()
+            }
+        } header: {
+            Text("Defaults")
+        } footer: {
+            Text(measureFooter)
+        }
+    }
+
+    private var measureFooter: String {
+        let scope = "Starting values used when this exercise is added to a workout. Each workout keeps its own, so changing these won't alter workouts you've already built."
+        switch kind {
+        case .reps:
+            return scope
+        case .time:
+            return "Each set runs for this long, and can be counted down from the workout. A single set is one continuous effort — a 15 minute jog. \(scope)"
+        case .untracked:
+            return "No sets and nothing to count — for warm-ups and mobility work that you just tick off."
+        }
+    }
+
+    // MARK: Load & save
+
     private func load() {
         guard !hasLoaded else { return }
         hasLoaded = true
         guard let exercise else { return }
         name = exercise.name
         sets = exercise.sets
-        reps = exercise.reps
+        kind = exercise.measure.kind
+        reps = exercise.measure.repCount
+        durationSeconds = exercise.measure.seconds
         videoURL = exercise.videoURL ?? ""
         notes = exercise.notes ?? ""
+    }
+
+    /// Blank fields fall back to the shared defaults, matching what their placeholders showed.
+    private var resolvedMeasure: SetMeasure {
+        switch kind {
+        case .reps: .reps(reps ?? SetMeasure.defaultReps)
+        case .time: .time(seconds: durationSeconds ?? SetMeasure.defaultSeconds)
+        case .untracked: .untracked
+        }
+    }
+
+    /// What a blank Sets field will save as, and therefore what its placeholder shows. An
+    /// existing exercise's own value comes first, so editing a single-effort jog and saving
+    /// can't silently turn it into three sets.
+    private var setsPlaceholder: Int {
+        exercise?.sets ?? kind.defaultSets ?? 1
+    }
+
+    private var resolvedSets: Int? {
+        kind == .untracked ? nil : max(1, sets ?? setsPlaceholder)
     }
 
     private func save() {
         let trimmedURL = videoURL.trimmingCharacters(in: .whitespaces)
         let trimmedNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
-        let resolvedSets = max(1, sets ?? Self.fallbackSets)
-        let resolvedReps = max(1, reps ?? Self.fallbackReps)
 
         if let exercise {
             exercise.name = name.trimmingCharacters(in: .whitespaces)
             exercise.sets = resolvedSets
-            exercise.reps = resolvedReps
+            exercise.measure = resolvedMeasure
             exercise.videoURL = trimmedURL.isEmpty ? nil : trimmedURL
             exercise.notes = trimmedNotes.isEmpty ? nil : trimmedNotes
         } else {
             let newExercise = Exercise(
                 name: name.trimmingCharacters(in: .whitespaces),
                 sets: resolvedSets,
-                reps: resolvedReps,
+                measure: resolvedMeasure,
                 videoURL: trimmedURL.isEmpty ? nil : trimmedURL,
                 notes: trimmedNotes.isEmpty ? nil : trimmedNotes
             )
@@ -141,6 +211,12 @@ struct CreateExerciseView: View {
 
 #Preview("Edit Exercise") {
     CreateExerciseView(exercise: PreviewData.exercise)
+        .modelContainer(PreviewData.container)
+}
+
+/// A timed exercise opens on the Time measure with its duration split into min/sec.
+#Preview("Edit Timed Exercise") {
+    CreateExerciseView(exercise: PreviewData.timedExercise)
         .modelContainer(PreviewData.container)
 }
 

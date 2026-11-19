@@ -95,7 +95,11 @@ struct ExercisePickerView: View {
                     .font(.title3)
                     .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
 
-                ExerciseRow(exercise: exercise)
+                ExerciseRow(
+                    exercise: exercise,
+                    prescription: exercise.prescription,
+                    isTimed: exercise.isTimed
+                )
 
                 Spacer()
 

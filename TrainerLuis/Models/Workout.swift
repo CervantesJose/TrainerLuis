@@ -134,10 +134,11 @@ extension Workout {
 // MARK: - Duplication
 
 extension Workout {
-    /// Copies this workout — name, notes, exercises, per-workout sets/reps and superset
+    /// Copies this workout — name, notes, exercises, per-workout sets, measures and superset
     /// grouping — onto another day. Any workout can therefore act as a template.
     ///
-    /// Completion state is deliberately not copied: the copy hasn't been performed yet.
+    /// Completion state is deliberately not copied: the copy hasn't been performed yet. That
+    /// includes per-set progress, which fresh `WorkoutExercise`s start at zero.
     @discardableResult
     func duplicate(to newDate: Date, named newName: String? = nil, in context: ModelContext) -> Workout {
         let copy = Workout(name: newName ?? name, date: newDate)
@@ -165,7 +166,7 @@ extension Workout {
                 exercise: exercise,
                 order: index,
                 sets: slot.sets,
-                reps: slot.reps,
+                measure: slot.measure,
                 supersetID: newGroupID
             )
             context.insert(clone)

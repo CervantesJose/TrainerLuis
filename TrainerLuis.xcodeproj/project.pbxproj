@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1B2C3D4000000000000040B /* SupersetDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4000000000000040A /* SupersetDetailView.swift */; };
+		A1B2C3D40000000000000409 /* SetTimerNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000000000000408 /* SetTimerNotifier.swift */; };
+		A1B2C3D40000000000000407 /* SetTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000000000000406 /* SetTimerView.swift */; };
+		A1B2C3D40000000000000405 /* DurationField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000000000000404 /* DurationField.swift */; };
+		A1B2C3D40000000000000403 /* AppSchema.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000000000000402 /* AppSchema.swift */; };
+		A1B2C3D40000000000000401 /* SetMeasure.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000000000000400 /* SetMeasure.swift */; };
 		01859630409CD343AB064AC8 /* ExerciseDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CEAA2E221861E160AF0E8A4 /* ExerciseDetailView.swift */; };
 		1319CA21D45443A8A095F6BD /* Exercise.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FDDBDC0C5DA0564F9E6393 /* Exercise.swift */; };
 		1B24D0FAEC0FDB2E8BE619EE /* WorkoutExercise.swift in Sources */ = {isa = PBXBuildFile; fileRef = B333F267A93376B448352B56 /* WorkoutExercise.swift */; };
@@ -35,6 +41,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A1B2C3D4000000000000040A /* SupersetDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupersetDetailView.swift; sourceTree = "<group>"; };
+		A1B2C3D40000000000000408 /* SetTimerNotifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTimerNotifier.swift; sourceTree = "<group>"; };
+		A1B2C3D40000000000000406 /* SetTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTimerView.swift; sourceTree = "<group>"; };
+		A1B2C3D40000000000000404 /* DurationField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DurationField.swift; sourceTree = "<group>"; };
+		A1B2C3D40000000000000402 /* AppSchema.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSchema.swift; sourceTree = "<group>"; };
+		A1B2C3D40000000000000400 /* SetMeasure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetMeasure.swift; sourceTree = "<group>"; };
 		08FDDBDC0C5DA0564F9E6393 /* Exercise.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Exercise.swift; sourceTree = "<group>"; };
 		0D3BB7A016FC342B8858C93E /* WorkoutListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutListView.swift; sourceTree = "<group>"; };
 		1CF8BF2040C439CA897BFC01 /* TrainerLuisApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainerLuisApp.swift; sourceTree = "<group>"; };
@@ -77,6 +89,10 @@
 		038FFFDCD976B9FB604203AB /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				A1B2C3D4000000000000040A /* SupersetDetailView.swift */,
+				A1B2C3D40000000000000408 /* SetTimerNotifier.swift */,
+				A1B2C3D40000000000000406 /* SetTimerView.swift */,
+				A1B2C3D40000000000000404 /* DurationField.swift */,
 				C11F5A22199F61C2C415BD67 /* CalendarView.swift */,
 				0D3BB7A016FC342B8858C93E /* WorkoutListView.swift */,
 				2B2A845629A1EEDB27AF82BD /* WorkoutDetailView.swift */,
@@ -101,6 +117,8 @@
 		849E4FBCB3714C27F1E17372 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				A1B2C3D40000000000000402 /* AppSchema.swift */,
+				A1B2C3D40000000000000400 /* SetMeasure.swift */,
 				08FDDBDC0C5DA0564F9E6393 /* Exercise.swift */,
 				3F85BB850ABC0F48636EE3CC /* Workout.swift */,
 				B333F267A93376B448352B56 /* WorkoutExercise.swift */,
@@ -207,6 +225,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1B2C3D4000000000000040B /* SupersetDetailView.swift in Sources */,
+				A1B2C3D40000000000000409 /* SetTimerNotifier.swift in Sources */,
+				A1B2C3D40000000000000407 /* SetTimerView.swift in Sources */,
+				A1B2C3D40000000000000405 /* DurationField.swift in Sources */,
+				A1B2C3D40000000000000403 /* AppSchema.swift in Sources */,
+				A1B2C3D40000000000000401 /* SetMeasure.swift in Sources */,
 				4ED3E10833613685BEA246FF /* TrainerLuisApp.swift in Sources */,
 				AF9C23E6D6D2DA9C8B87A4F9 /* ContentView.swift in Sources */,
 				1319CA21D45443A8A095F6BD /* Exercise.swift in Sources */,
