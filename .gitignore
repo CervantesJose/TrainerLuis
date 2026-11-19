@@ -1,0 +1,14 @@
+# Claude Code
+CLAUDE.md
+.claude/settings.local.json
+
+# macOS
+.DS_Store
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+
+# Build output
+build/
+DerivedData/
