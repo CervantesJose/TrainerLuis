@@ -36,11 +36,14 @@ struct WorkoutDetailView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    completionBadge
-                        .onTapGesture {
-                            withAnimation { workout.isCompleted.toggle() }
-                            modelContext.saveChanges()
-                        }
+                    Button {
+                        withAnimation { workout.isCompleted.toggle() }
+                        modelContext.saveChanges()
+                    } label: {
+                        completionBadge
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(workout.isCompleted ? "Mark Incomplete" : "Mark Complete")
                 }
                 .padding(.vertical, 4)
             }
@@ -111,7 +114,7 @@ struct WorkoutDetailView: View {
                         Label("Duplicate to…", systemImage: "doc.on.doc")
                     }
                 } label: {
-                    Image(systemName: "ellipsis.circle")
+                    Label("More", systemImage: "ellipsis.circle")
                 }
             }
         }
@@ -123,6 +126,9 @@ struct WorkoutDetailView: View {
         }
         .sheet(item: $timerSlot) { slot in
             SetTimerView(slot: slot)
+        }
+        .navigationDestination(for: Exercise.self) { exercise in
+            ExerciseDetailView(exercise: exercise)
         }
         .navigationDestination(item: $detailExercise) { exercise in
             ExerciseDetailView(exercise: exercise)
@@ -141,9 +147,7 @@ struct WorkoutDetailView: View {
         .foregroundStyle(workout.isCompleted ? .green : .orange)
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(
-            Capsule().fill((workout.isCompleted ? Color.green : Color.orange).opacity(0.15))
-        )
+        .background((workout.isCompleted ? Color.green : Color.orange).opacity(0.15), in: .capsule)
     }
 }
 

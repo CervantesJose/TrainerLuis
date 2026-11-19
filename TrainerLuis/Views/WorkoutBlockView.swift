@@ -38,7 +38,7 @@ struct WorkoutBlockView: View {
             VStack(alignment: .leading, spacing: 8) {
                 supersetHeader(groupID: groupID, count: members.count)
 
-                ForEach(Array(members.enumerated()), id: \.element.id) { index, slot in
+                ForEach(members.enumerated(), id: \.element.id) { index, slot in
                     slotRow(slot, label: "\(index + 1)", superset: groupID)
                 }
             }
@@ -119,9 +119,7 @@ struct WorkoutBlockView: View {
             }
             .buttonStyle(.plain)
         } else if superset == nil, showsNavigation, let exercise = slot.exercise {
-            NavigationLink {
-                ExerciseDetailView(exercise: exercise)
-            } label: {
+            NavigationLink(value: exercise) {
                 slotContent(slot, label: label)
             }
         } else {
@@ -137,7 +135,7 @@ struct WorkoutBlockView: View {
                     .monospaced()
                     .foregroundStyle(.white)
                     .frame(width: 18, height: 18)
-                    .background(Circle().fill(Color.accentColor))
+                    .background(.tint, in: .circle)
             }
             ExerciseRow(slot: slot)
         }

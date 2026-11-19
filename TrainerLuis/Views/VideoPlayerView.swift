@@ -1,25 +1,26 @@
 import SwiftUI
 import WebKit
 
-struct VideoPlayerView: UIViewRepresentable {
+/// Plays an exercise's demo video inline, using SwiftUI's native `WebView`.
+struct VideoPlayerView: View {
     let urlString: String
 
-    func makeUIView(context: Context) -> WKWebView {
-        let config = WKWebViewConfiguration()
-        config.allowsInlineMediaPlayback = true
-        config.mediaTypesRequiringUserActionForPlayback = []
-        let webView = WKWebView(frame: .zero, configuration: config)
-        webView.scrollView.isScrollEnabled = false
-        webView.backgroundColor = .black
-        webView.pauseAllMediaPlayback(completionHandler: nil)
-        return webView
-    }
+    @State private var page: WebPage = {
+        var configuration = WebPage.Configuration()
+        configuration.mediaPlaybackBehavior = .allowsInlinePlayback
+        return WebPage(configuration: configuration)
+    }()
 
-    func updateUIView(_ webView: WKWebView, context: Context) {
-        guard let embedURL = Self.embedURL(from: urlString), let url = URL(string: embedURL) else {
-            return
-        }
-        webView.load(URLRequest(url: url))
+    var body: some View {
+        WebView(page)
+            .scrollDisabled(true)
+            .background(.black)
+            .task(id: urlString) {
+                guard let embedURL = Self.embedURL(from: urlString), let url = URL(string: embedURL) else {
+                    return
+                }
+                page.load(url)
+            }
     }
 
     static func embedURL(from raw: String) -> String? {
@@ -31,7 +32,7 @@ struct VideoPlayerView: UIViewRepresentable {
 
         // youtu.be short link
         if let range = trimmed.range(of: "youtu.be/") {
-            let videoID = String(trimmed[range.upperBound...]).components(separatedBy: "?").first ?? ""
+            let videoID = trimmed[range.upperBound...].split(separator: "?").first.map(String.init) ?? ""
             return "https://www.youtube.com/embed/\(videoID)"
         }
 
@@ -51,4 +52,5 @@ struct VideoPlayerView: UIViewRepresentable {
 
 #Preview {
     VideoPlayerView(urlString: "https://www.youtube.com/watch?v=nKVZBKoB6P4")
+        .aspectRatio(16 / 9, contentMode: .fit)
 }

@@ -23,9 +23,7 @@ struct WorkoutListView: View {
                 } else {
                     List {
                         ForEach(workouts) { workout in
-                            NavigationLink {
-                                WorkoutDetailView(workout: workout)
-                            } label: {
+                            NavigationLink(value: workout) {
                                 WorkoutRow(workout: workout)
                             }
                             .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -51,10 +49,8 @@ struct WorkoutListView: View {
             .navigationTitle("Workouts")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
+                    Button("Add Workout", systemImage: "plus") {
                         showingCreate = true
-                    } label: {
-                        Image(systemName: "plus")
                     }
                 }
                 if !workouts.isEmpty {
@@ -62,6 +58,9 @@ struct WorkoutListView: View {
                         EditButton()
                     }
                 }
+            }
+            .navigationDestination(for: Workout.self) { workout in
+                WorkoutDetailView(workout: workout)
             }
             .sheet(isPresented: $showingCreate) {
                 CreateWorkoutView()

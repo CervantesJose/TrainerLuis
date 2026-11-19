@@ -3,20 +3,17 @@ import SwiftUI
 struct ContentView: View {
     var body: some View {
         TabView {
-            CalendarView()
-                .tabItem {
-                    Label("Calendar", systemImage: "calendar")
-                }
+            Tab("Calendar", systemImage: "calendar") {
+                CalendarView()
+            }
 
-            WorkoutListView()
-                .tabItem {
-                    Label("Workouts", systemImage: "dumbbell.fill")
-                }
+            Tab("Workouts", systemImage: "dumbbell.fill") {
+                WorkoutListView()
+            }
 
-            ExerciseLibraryView()
-                .tabItem {
-                    Label("Exercises", systemImage: "figure.strengthtraining.traditional")
-                }
+            Tab("Exercises", systemImage: "figure.strengthtraining.traditional") {
+                ExerciseLibraryView()
+            }
         }
     }
 }

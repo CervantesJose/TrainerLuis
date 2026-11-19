@@ -24,6 +24,12 @@ struct SetTimerView: View {
     /// Seconds left on a paused set. Non-nil only while paused.
     @State private var pausedRemaining: TimeInterval?
 
+    /// Bumped each time a set runs out with the app on screen, to fire the success haptic.
+    @State private var finishedSetCount = 0
+
+    /// The countdown's size, scaled with Dynamic Type from a large-title baseline.
+    @ScaledMetric(relativeTo: .largeTitle) private var timeFontSize = 54.0
+
     private var setLength: TimeInterval {
         TimeInterval(slot.setSeconds ?? SetMeasure.defaultSeconds)
     }
@@ -69,6 +75,7 @@ struct SetTimerView: View {
             guard phase == .active, let endDate, endDate <= Date() else { return }
             completeRunningSet(alerting: false)
         }
+        .sensoryFeedback(.success, trigger: finishedSetCount)
         .onDisappear {
             SetTimerNotifier.cancel(id: notificationID)
             keepScreenAwake(false)
@@ -120,18 +127,23 @@ struct SetTimerView: View {
                     showsHours: setLength >= 3600
                 )
                 .font(timeFont)
+                .padding(.horizontal, 28)
             } else {
                 arc(progress: progress(remaining: staticRemaining))
                 Text(SetMeasure.timeText(Int(staticRemaining.rounded())))
                     .font(timeFont)
+                    .padding(.horizontal, 28)
             }
         }
+        // The dial is fixed, so at the largest text sizes the time shrinks to fit inside it.
+        .lineLimit(1)
+        .minimumScaleFactor(0.4)
         .frame(width: 240, height: 240)
         .animation(.default, value: slot.setsDone)
     }
 
     private var timeFont: Font {
-        .system(size: 54, weight: .semibold, design: .rounded).monospacedDigit()
+        .system(size: timeFontSize, weight: .semibold, design: .rounded).monospacedDigit()
     }
 
     private func arc(progress: Double) -> some View {
@@ -257,7 +269,7 @@ struct SetTimerView: View {
         recordSet()
 
         if alerting {
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            finishedSetCount += 1
             AudioServicesPlaySystemSound(1057)
         }
     }

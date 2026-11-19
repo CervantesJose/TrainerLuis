@@ -93,7 +93,7 @@ struct CreateWorkoutView: View {
 
     private var exercisesSection: some View {
         Section {
-            ForEach(Array(drafts.enumerated()), id: \.element.id) { index, draft in
+            ForEach(drafts.enumerated(), id: \.element.id) { index, draft in
                 draftRow(draft, at: index)
             }
             .onDelete(perform: deleteDrafts)
@@ -150,7 +150,7 @@ struct CreateWorkoutView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 3)
-                        .background(Capsule().fill(Color.accentColor))
+                        .background(.tint, in: .capsule)
                 }
                 Text(draft.exercise.name)
                     .font(.headline)
@@ -255,10 +255,11 @@ struct CreateWorkoutView: View {
                 }
             }
         } label: {
-            Image(systemName: draft.kind.symbol)
+            Label("Measured in \(draft.kind.label)", systemImage: draft.kind.symbol)
+                .labelStyle(.iconOnly)
                 .font(.subheadline)
                 .frame(width: 30, height: 30)
-                .background(Circle().fill(.quaternary))
+                .background(.quaternary, in: .circle)
         }
         .buttonStyle(.borderless)
     }

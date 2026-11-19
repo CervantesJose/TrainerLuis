@@ -39,7 +39,7 @@ struct ExerciseDetailView: View {
                 Section("Demo Video") {
                     VideoPlayerView(urlString: url)
                         .aspectRatio(16 / 9, contentMode: .fit)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .clipShape(.rect(cornerRadius: 10))
                         .listRowInsets(.init(top: 12, leading: 12, bottom: 12, trailing: 12))
                 }
             }

@@ -31,7 +31,7 @@ struct SupersetDetailView: View {
                 emptyState
             } else {
                 overviewSection
-                ForEach(Array(members.enumerated()), id: \.element.id) { index, slot in
+                ForEach(members.enumerated(), id: \.element.id) { index, slot in
                     memberSection(slot, position: index + 1)
                 }
             }
@@ -40,10 +40,8 @@ struct SupersetDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
+                Button("Edit Workout", systemImage: "pencil") {
                     showingEditWorkout = true
-                } label: {
-                    Label("Edit Workout", systemImage: "pencil")
                 }
             }
         }
@@ -131,7 +129,7 @@ struct SupersetDetailView: View {
             if let url = slot.exercise?.videoURL, !url.isEmpty {
                 VideoPlayerView(urlString: url)
                     .aspectRatio(16 / 9, contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(.rect(cornerRadius: 10))
                     .listRowInsets(.init(top: 12, leading: 12, bottom: 12, trailing: 12))
             }
 
@@ -144,9 +142,7 @@ struct SupersetDetailView: View {
             // The one push left on this screen, and it's deliberate: library defaults and
             // usage belong to the exercise, not to this workout's slot.
             if let exercise = slot.exercise {
-                NavigationLink {
-                    ExerciseDetailView(exercise: exercise)
-                } label: {
+                NavigationLink(value: exercise) {
                     Label("Exercise Details", systemImage: "info.circle")
                 }
             }
@@ -157,7 +153,7 @@ struct SupersetDetailView: View {
                     .monospaced()
                     .foregroundStyle(.white)
                     .frame(width: 18, height: 18)
-                    .background(Circle().fill(Color.accentColor))
+                    .background(.tint, in: .circle)
                 Text(slot.exercise?.name ?? "Exercise removed")
                     .font(.headline)
             }

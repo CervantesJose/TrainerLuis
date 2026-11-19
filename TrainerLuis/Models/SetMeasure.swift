@@ -12,7 +12,7 @@ import Foundation
 /// Which covers the whole range with no special cases: bench press is 4 sets of `.reps(8)`,
 /// sprints are 3 sets of `.time(seconds: 15)`, a jog is one set of `.time(seconds: 900)`,
 /// and "roll out body" is `.untracked` with no sets at all.
-enum SetMeasure: Equatable, Hashable {
+nonisolated enum SetMeasure: Equatable, Hashable {
     /// A rep target — the classic strength prescription.
     case reps(Int)
 
@@ -31,7 +31,7 @@ enum SetMeasure: Equatable, Hashable {
 
 // MARK: - Components
 
-extension SetMeasure {
+nonisolated extension SetMeasure {
     /// The measure axis stripped of its value, for pickers and for storing "which fields
     /// should be showing" while a value is still being typed.
     enum Kind: String, CaseIterable, Identifiable, Codable {
@@ -105,7 +105,7 @@ extension SetMeasure {
 
 // MARK: - Display
 
-extension SetMeasure {
+nonisolated extension SetMeasure {
     /// A duration as `m:ss`, growing to `h:mm:ss` past an hour — "0:15", "15:00", "1:05:00".
     static func timeText(_ seconds: Int) -> String {
         let duration = Duration.seconds(max(0, seconds))
@@ -119,9 +119,9 @@ extension SetMeasure {
     static func unitTimeText(_ seconds: Int) -> String {
         let total = max(0, seconds)
         let (hours, minutes, secs) = (total / 3600, total % 3600 / 60, total % 60)
-        return hours > 0
-            ? String(format: "%dh:%02dm:%02ds", hours, minutes, secs)
-            : String(format: "%dm:%02ds", minutes, secs)
+        let twoDigits = IntegerFormatStyle<Int>.number.grouping(.never).precision(.integerLength(2))
+        let tail = "\(minutes.formatted(twoDigits))m:\(secs.formatted(twoDigits))s"
+        return hours > 0 ? "\(hours)h:\(tail)" : "\(minutes)m:\(secs.formatted(twoDigits))s"
     }
 
     /// One set on its own — "8 reps", "0m:15s", or nothing to say.
@@ -138,7 +138,7 @@ extension SetMeasure {
 ///
 /// Lives outside the models so ``Exercise`` and ``WorkoutExercise`` — which hold the same
 /// three fields for different scopes — can't drift into formatting the same thing two ways.
-enum SetPrescription {
+nonisolated enum SetPrescription {
     /// e.g. "4 sets × 8 reps", "3 sets × 0m:15s", "15m:00s", "8 reps", "3 sets", or nil when
     /// there is nothing worth printing next to the exercise's name.
     static func text(sets: Int?, measure: SetMeasure) -> String? {

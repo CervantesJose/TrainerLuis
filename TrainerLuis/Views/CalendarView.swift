@@ -36,12 +36,13 @@ struct CalendarView: View {
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
+                    Button("Add Workout", systemImage: "plus") {
                         showingCreate = true
-                    } label: {
-                        Image(systemName: "plus")
                     }
                 }
+            }
+            .navigationDestination(for: Workout.self) { workout in
+                WorkoutDetailView(workout: workout)
             }
             .sheet(isPresented: $showingCreate) {
                 CreateWorkoutView(initialDate: selectedDate)
@@ -69,18 +70,17 @@ struct CalendarView: View {
             calendarGrid
             Divider()
         }
-        .background(Color(.systemBackground))
+        .background(.background)
     }
 
     private var monthHeader: some View {
         HStack {
-            Button {
+            Button("Previous Month", systemImage: "chevron.left") {
                 currentMonth = cal.date(byAdding: .month, value: -1, to: currentMonth) ?? currentMonth
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.title2.weight(.semibold))
-                    .frame(width: 44, height: 44)
             }
+            .labelStyle(.iconOnly)
+            .font(.title2.weight(.semibold))
+            .frame(width: 44, height: 44)
 
             Spacer()
 
@@ -89,13 +89,12 @@ struct CalendarView: View {
 
             Spacer()
 
-            Button {
+            Button("Next Month", systemImage: "chevron.right") {
                 currentMonth = cal.date(byAdding: .month, value: 1, to: currentMonth) ?? currentMonth
-            } label: {
-                Image(systemName: "chevron.right")
-                    .font(.title2.weight(.semibold))
-                    .frame(width: 44, height: 44)
             }
+            .labelStyle(.iconOnly)
+            .font(.title2.weight(.semibold))
+            .frame(width: 44, height: 44)
         }
         .padding(.horizontal)
         .padding(.bottom, 4)
@@ -119,20 +118,21 @@ struct CalendarView: View {
         let byDay = workoutsByDay
 
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 2) {
-            ForEach(Array(daysInMonth().enumerated()), id: \.offset) { _, date in
+            ForEach(daysInMonth().enumerated(), id: \.offset) { _, date in
                 if let date {
-                    let isSelected = cal.isDate(selectedDate, inSameDayAs: date)
-                    DayCell(
-                        date: date,
-                        isSelected: isSelected,
-                        isToday: cal.isDateInToday(date),
-                        dotColors: (byDay[cal.startOfDay(for: date)] ?? []).map(dotColor)
-                    )
-                    .onTapGesture {
+                    Button {
                         withAnimation(.easeInOut(duration: 0.15)) {
                             selectedDate = date
                         }
+                    } label: {
+                        DayCell(
+                            date: date,
+                            isSelected: cal.isDate(selectedDate, inSameDayAs: date),
+                            isToday: cal.isDateInToday(date),
+                            dotColors: (byDay[cal.startOfDay(for: date)] ?? []).map(dotColor)
+                        )
                     }
+                    .buttonStyle(.plain)
                 } else {
                     Color.clear.frame(height: 50)
                 }
@@ -174,9 +174,7 @@ struct CalendarView: View {
     }
 
     private func workoutRow(_ workout: Workout) -> some View {
-        NavigationLink {
-            WorkoutDetailView(workout: workout)
-        } label: {
+        NavigationLink(value: workout) {
             WorkoutRow(workout: workout)
         }
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -202,31 +200,24 @@ struct CalendarView: View {
     }
 
     private var emptyDay: some View {
-        VStack(spacing: 14) {
-            Image(systemName: "calendar.badge.plus")
-                .font(.system(size: 44))
-                .foregroundStyle(.secondary)
-            Text("No workout on \(selectedDate.formatted(.dateTime.weekday(.wide).month().day()))")
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+        ContentUnavailableView {
+            Label(
+                "No workout on \(selectedDate.formatted(.dateTime.weekday(.wide).month().day()))",
+                systemImage: "calendar.badge.plus"
+            )
+        } actions: {
+            Button("Add Workout") {
+                showingCreate = true
+            }
+            .buttonStyle(.borderedProminent)
 
-            HStack(spacing: 12) {
-                Button("Add Workout") {
-                    showingCreate = true
+            if let recent = mostRecentWorkout {
+                Button("Copy \(recent.name)") {
+                    duplicating = recent
                 }
-                .buttonStyle(.borderedProminent)
-
-                if let recent = mostRecentWorkout {
-                    Button("Copy \(recent.name)") {
-                        duplicating = recent
-                    }
-                    .buttonStyle(.bordered)
-                }
+                .buttonStyle(.bordered)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
-        .background(Color(.systemGroupedBackground))
     }
 
     // MARK: Helpers

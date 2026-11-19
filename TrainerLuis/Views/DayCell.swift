@@ -14,19 +14,17 @@ struct DayCell: View {
     /// ``maxDots`` the extras are dropped rather than squeezing the row.
     let dotColors: [Color]
 
-    private let cal = Calendar.current
-
     var body: some View {
         VStack(spacing: 3) {
             ZStack {
                 if isSelected {
-                    Circle().fill(Color.accentColor)
+                    Circle().fill(.tint)
                 } else if isToday {
-                    Circle().stroke(Color.accentColor, lineWidth: 1.5)
+                    Circle().stroke(.tint, lineWidth: 1.5)
                 }
-                Text("\(cal.component(.day, from: date))")
+                Text(date, format: .dateTime.day())
                     .font(.system(.body, design: .rounded))
-                    .fontWeight(isToday || isSelected ? .bold : .regular)
+                    .bold(isToday || isSelected)
                     .foregroundStyle(isSelected ? .white : isToday ? .accentColor : .primary)
             }
             .frame(width: 36, height: 36)
@@ -34,16 +32,16 @@ struct DayCell: View {
             // A clear dot holds the space on empty days so cell heights don't jitter.
             HStack(spacing: 3) {
                 if dotColors.isEmpty {
-                    Circle().fill(Color.clear).frame(width: 6, height: 6)
+                    Circle().fill(.clear).frame(width: 6, height: 6)
                 } else {
-                    ForEach(Array(dotColors.prefix(Self.maxDots).enumerated()), id: \.offset) { _, color in
+                    ForEach(dotColors.prefix(Self.maxDots).enumerated(), id: \.offset) { _, color in
                         Circle().fill(color).frame(width: 6, height: 6)
                     }
                 }
             }
         }
         .frame(height: 50)
-        .contentShape(Rectangle())
+        .contentShape(.rect)
     }
 }
 

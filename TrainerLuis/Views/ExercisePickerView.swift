@@ -20,7 +20,7 @@ struct ExercisePickerView: View {
 
     private var filtered: [Exercise] {
         guard !searchText.isEmpty else { return exercises }
-        return exercises.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        return exercises.filter { $0.name.localizedStandardContains(searchText) }
     }
 
     var body: some View {
@@ -109,7 +109,7 @@ struct ExercisePickerView: View {
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(Capsule().fill(.quaternary))
+                        .background(.quaternary, in: .capsule)
                 }
             }
         }

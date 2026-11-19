@@ -34,7 +34,7 @@ struct WorkoutRow: View {
                     .foregroundStyle(.green)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background(Capsule().fill(Color.green.opacity(0.15)))
+                    .background(.green.opacity(0.15), in: .capsule)
             }
         }
         .padding(.vertical, 4)

@@ -13,7 +13,7 @@ struct ExerciseLibraryView: View {
 
     var filtered: [Exercise] {
         guard !searchText.isEmpty else { return exercises }
-        return exercises.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        return exercises.filter { $0.name.localizedStandardContains(searchText) }
     }
 
     var body: some View {
@@ -28,9 +28,7 @@ struct ExerciseLibraryView: View {
                 } else {
                     List {
                         ForEach(filtered) { exercise in
-                            NavigationLink {
-                                ExerciseDetailView(exercise: exercise)
-                            } label: {
+                            NavigationLink(value: exercise) {
                                 ExerciseRow(library: exercise)
                             }
                         }
@@ -42,12 +40,13 @@ struct ExerciseLibraryView: View {
             .navigationTitle("Exercises")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
+                    Button("Add Exercise", systemImage: "plus") {
                         showingCreate = true
-                    } label: {
-                        Image(systemName: "plus")
                     }
                 }
+            }
+            .navigationDestination(for: Exercise.self) { exercise in
+                ExerciseDetailView(exercise: exercise)
             }
             .sheet(isPresented: $showingCreate) {
                 CreateExerciseView()
